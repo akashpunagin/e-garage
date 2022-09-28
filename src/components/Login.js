@@ -1,7 +1,45 @@
 import React, { useRef } from "react";
 import { Link, useHistory } from "react-router-dom";
 
+import Paper from "@mui/material/Paper";
+import Grid from "@mui/material/Grid";
+import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
+
 import { useAuth } from "../contexts/Auth";
+
+import { Button, CssBaseline, TextField } from "@mui/material";
+
+function LogInForm({ handleSubmit }) {
+  return (
+    <Box component="form" noValidate onSubmit={handleSubmit} sx={{ m: 3 }}>
+      <TextField
+        margin="normal"
+        required
+        fullWidth
+        id="email"
+        label="Email"
+        type="text"
+        name="email"
+        autoComplete="email"
+        autoFocus
+      ></TextField>
+      <TextField
+        margin="normal"
+        required
+        fullWidth
+        id="password"
+        label="Password"
+        type="password"
+        name="password"
+        autoFocus
+      ></TextField>
+      <Button type="submit" fullWidth variant="contained">
+        Log In
+      </Button>
+    </Box>
+  );
+}
 
 export function Login() {
   const emailRef = useRef();
@@ -27,21 +65,43 @@ export function Login() {
   }
 
   return (
-    <React.Fragment>
-      <form onSubmit={handleSubmit}>
-        <label htmlFor="input-email">Email</label>
-        <input id="input-email" type="email" ref={emailRef}></input>
-
-        <label htmlFor="input-password">Password</label>
-        <input id="input-password" type="password" ref={passwordRef}></input>
-
-        <br></br>
-
-        <button type="submit">Login</button>
-      </form>
-      <p>
-        Don't have an account? <Link to="/signup">Sign Up</Link>
-      </p>
-    </React.Fragment>
+    <Grid container sx={{ height: "100vh" }} component="main">
+      <CssBaseline />
+      <Grid
+        item
+        xs={false}
+        sm={3}
+        md={7}
+        sx={{
+          backgroundImage: "url(https://source.unsplash.com/random)",
+          backgroundRepeat: "no-repeat",
+          backgroundColor: (t) =>
+            t.palette.mode === "light"
+              ? t.palette.grey[50]
+              : t.palette.grey[900],
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      ></Grid>
+      <Grid item xs={12} sm={9} md={5} component={Paper} elevation={5}>
+        <Box
+          sx={{
+            my: 8,
+            mx: 4,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <Typography component="h1" variant="h5">
+            Login
+          </Typography>
+          <LogInForm handleSubmit={handleSubmit}></LogInForm>
+          <Typography component="h3" variant="p">
+            Don't have an account? <Link to="/signup">Sign Up</Link>
+          </Typography>
+        </Box>
+      </Grid>
+    </Grid>
   );
 }

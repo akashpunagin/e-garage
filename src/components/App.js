@@ -5,11 +5,11 @@ import { Login } from "./Login";
 import { Dashboard } from "./Dashboard";
 import { AuthProvider } from "../contexts/Auth";
 import { PrivateRoute } from "./PrivateRoute";
+import React from "react";
 
 function App() {
   return (
-    <div>
-      <h1>e garrage</h1>
+    <React.Fragment>
       <Router>
         <AuthProvider>
           <Switch>
@@ -19,7 +19,7 @@ function App() {
           </Switch>
         </AuthProvider>
       </Router>
-    </div>
+    </React.Fragment>
   );
 }
 
