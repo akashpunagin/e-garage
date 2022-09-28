@@ -4,6 +4,7 @@ import { SignUp } from "./SignUp";
 import { Login } from "./Login";
 import { Dashboard } from "./Dashboard";
 import { AuthProvider } from "../contexts/Auth";
+import { PrivateRoute } from "./PrivateRoute";
 
 function App() {
   return (
@@ -12,7 +13,7 @@ function App() {
       <Router>
         <AuthProvider>
           <Switch>
-            <Route exact path="/" component={Dashboard}></Route>
+            <PrivateRoute exact path="/" component={Dashboard}></PrivateRoute>
             <Route path="/signup" component={SignUp}></Route>
             <Route path="/login" component={Login}></Route>
           </Switch>
