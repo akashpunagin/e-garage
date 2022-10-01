@@ -19,6 +19,7 @@ export function SideImage({
         md={7}
         sx={{
           backgroundImage: "url(https://source.unsplash.com/random)",
+          // TODO change background image
           backgroundRepeat: "no-repeat",
           backgroundColor: (t) =>
             t.palette.mode === "light"
