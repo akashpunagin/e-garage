@@ -1,10 +1,22 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
-import { Button, Box, Typography, Modal, Grid, TextField } from "@mui/material";
+import {
+  Button,
+  Box,
+  Typography,
+  Modal,
+  Grid,
+  TextField,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemAvatar,
+} from "@mui/material";
 
 import { DashboardSkeleton } from "../DashboardSkeleton";
 
 import CustomerModel from "../../../models/Customer";
+import { getCustomer } from "../../../services/supabase/customer";
 
 const style = {
   position: "absolute",
@@ -22,6 +34,35 @@ function Component() {
   const [addCustomerFormOpen, setAddCustomrtFormOpen] = useState(false);
   const handleAddCustomerFormOpen = () => setAddCustomrtFormOpen(true);
   const handleAddCustomerFormClose = () => setAddCustomrtFormOpen(false);
+
+  const [customers, setCustomers] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchCustomers = async () => {
+    const apiResponse = await getCustomer();
+    if (apiResponse.error) {
+      alert(
+        `There was some error while fetching customers: ${apiResponse.errorMessage}`
+      );
+      return [];
+    } else {
+      return apiResponse.data;
+    }
+  };
+
+  const setCustomersData = async () => {
+    setLoading(true);
+    let res = await fetchCustomers();
+    console.log("CHECK", res);
+    if (true) {
+      setCustomers((prev) => res);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    setCustomersData();
+  }, []);
 
   const AddCustomerModal = () => {
     const nameRef = useRef();
@@ -51,6 +92,7 @@ function Component() {
       } else {
         alert(`Customer inserted successfully`);
         handleAddCustomerFormClose();
+        setCustomersData();
       }
     }
 
@@ -128,23 +170,47 @@ function Component() {
     );
   };
 
+  const CustomersList = ({ customers }) => {
+    return (
+      <React.Fragment>
+        {customers.map((c, i) => (
+          <ListItem key={c.id} disablePadding>
+            <ListItemAvatar>
+              <Typography variant="h5" component="h5">
+                {i + 1}
+              </Typography>
+            </ListItemAvatar>
+            <ListItemText primary={c.name} secondary={c.contact} />
+          </ListItem>
+        ))}
+      </React.Fragment>
+    );
+  };
+
   return (
-    <Grid
-      container
-      component="main"
-      direction="row"
-      justifyContent="space-between"
-      alignItems="center"
-      sx={{ width: "90vw" }}
-    >
-      <Grid item>
-        <Typography variant="h2">Cusomers</Typography>
+    <Box>
+      <Grid
+        container
+        component="main"
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{ width: "90vw" }}
+      >
+        <Grid item>
+          <Typography variant="h2">Cusomers</Typography>
+        </Grid>
+        <Grid item>
+          <Button onClick={handleAddCustomerFormOpen}>Add Customer</Button>
+          <AddCustomerModal></AddCustomerModal>
+        </Grid>
       </Grid>
-      <Grid item>
-        <Button onClick={handleAddCustomerFormOpen}>Add Customer</Button>
-        <AddCustomerModal></AddCustomerModal>
-      </Grid>
-    </Grid>
+      {!loading ? (
+        <CustomersList customers={customers}></CustomersList>
+      ) : (
+        <p>Loading</p>
+      )}
+    </Box>
   );
 }
 
