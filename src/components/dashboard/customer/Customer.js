@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 
-import { Button, Box, Typography, Modal, Grid } from "@mui/material";
+import { Button, Box, Typography, Modal, Grid, TextField } from "@mui/material";
 
 import { DashboardSkeleton } from "../DashboardSkeleton";
 
@@ -22,6 +22,22 @@ function Component() {
   const handleAddCustomerFormClose = () => setAddCustomrtFormOpen(false);
 
   const AddCustomerModal = () => {
+    const nameRef = useRef();
+    const addressRef = useRef();
+    const contactRef = useRef();
+    const aadharRef = useRef();
+
+    async function handleAddCustomerSubmit(e) {
+      e.preventDefault();
+
+      const name = nameRef.current.value;
+      const address = addressRef.current.value;
+      const contact = contactRef.current.value;
+      const aadhar = aadharRef.current.value;
+
+      console.log("Add customer", { name, address, contact, aadhar });
+    }
+
     return (
       <Modal
         open={addCustomerFormOpen}
@@ -30,11 +46,66 @@ function Component() {
         aria-describedby="modal-modal-description"
       >
         <Box sx={style}>
-          <Typography id="modal-modal-title" variant="h6" component="h2">
-            Text in a modal
+          <Typography id="modal-modal-title" variant="h5" component="h5">
+            Add Customer
           </Typography>
           <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-            Duis mollis, est non commodo luctus, nisi erat porttitor ligula.
+            <Box
+              component="form"
+              noValidate
+              autoComplete="off"
+              onSubmit={handleAddCustomerSubmit}
+            >
+              <TextField
+                id="name"
+                label="Name"
+                variant="outlined"
+                margin="normal"
+                required
+                fullWidth
+                type="text"
+                name="name"
+                autoFocus
+                inputRef={nameRef}
+              />
+              <TextField
+                id="address"
+                label="Address"
+                variant="outlined"
+                margin="normal"
+                required
+                fullWidth
+                type="text"
+                name="address"
+                multiline
+                inputRef={addressRef}
+              />
+              <TextField
+                id="contact"
+                label="Contact"
+                variant="outlined"
+                margin="normal"
+                required
+                fullWidth
+                type="number"
+                name="contact"
+                inputRef={contactRef}
+              />
+              <TextField
+                id="aadhar"
+                label="Aadhar"
+                variant="outlined"
+                margin="normal"
+                required
+                fullWidth
+                type="number"
+                name="aadhar"
+                inputRef={aadharRef}
+              />
+              <Button type="submit" fullWidth variant="contained">
+                Add
+              </Button>
+            </Box>
           </Typography>
         </Box>
       </Modal>
