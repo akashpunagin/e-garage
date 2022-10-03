@@ -44,18 +44,44 @@ async function getCustomer() {
       c.contact,
       c.aadhar_number
     );
-    console.log(temp);
     ret.push(temp);
   }
-
-  // customers = customers.map(
-  //   ({ customer_id, name, address, contact, aadhar_number }) => {
-  //     new CustomerModel(customer_id, name, address, contact, aadhar_number);
-  //   }
-  // );
-  // return ApiResponse.success(customers);
 
   return ApiResponse.success(ret);
 }
 
-export { insertCustomer, getCustomer };
+async function deleteCustomerWithId(customerId) {
+  const { data, error } = await supabase
+    .from(CUSTOMER)
+    .delete()
+    .eq("customer_id", customerId);
+
+  if (error) {
+    return ApiResponse.error(error.message);
+  }
+  return ApiResponse.success();
+}
+
+async function updateCustomerById(customerId, name, address, contact, aadhar) {
+  const { data, error } = await supabase
+    .from(CUSTOMER)
+    .update({
+      name,
+      address,
+      contact,
+      aadhar_number: aadhar,
+    })
+    .eq("customer_id", customerId);
+
+  if (error) {
+    return ApiResponse.error(error.message);
+  }
+  return ApiResponse.success();
+}
+
+export {
+  insertCustomer,
+  getCustomer,
+  deleteCustomerWithId,
+  updateCustomerById,
+};

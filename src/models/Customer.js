@@ -1,4 +1,8 @@
-import { insertCustomer } from "../services/supabase/customer";
+import {
+  insertCustomer,
+  updateCustomerById,
+  deleteCustomerWithId,
+} from "../services/supabase/customer";
 
 class CustomerModel {
   constructor(id, name, address, contact, aadhar) {
@@ -11,6 +15,14 @@ class CustomerModel {
 
   static async insert(name, address, contact, aadhar) {
     return await insertCustomer(name, address, contact, aadhar);
+  }
+
+  async update(name, address, contact, aadhar) {
+    return await updateCustomerById(this.id, name, address, contact, aadhar);
+  }
+
+  async delete() {
+    return await deleteCustomerWithId(this.id);
   }
 }
 
