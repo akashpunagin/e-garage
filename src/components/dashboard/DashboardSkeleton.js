@@ -44,7 +44,6 @@ export function DashboardSkeleton({ component: Component }) {
   const drawerWidth = 240;
 
   const navItems = [
-    new NavItem("Home", Dashboard, "/"),
     new NavItem("Customers", Customer, "/customer"),
     new NavItem("Stock", Stock, "/stock"),
     new NavItem("Vehicle", Vehicle, "/vehicle"),
@@ -58,24 +57,24 @@ export function DashboardSkeleton({ component: Component }) {
     setMobileOpen(!mobileOpen);
   };
 
-  const handleNavItemClick = (item) => {
-    console.log({ item });
-    <Link to={item.path}>Sign Up</Link>;
+  const AppLabelAndLogo = () => {
+    return (
+      <Link to="/" style={{ textDecoration: "none", color: "black" }}>
+        E Garrage
+      </Link>
+    );
   };
 
   const drawer = (
     <Box onClick={handleDrawerToggle} sx={{ textAlign: "center" }}>
       <Typography variant="h6" sx={{ my: 2 }}>
-        E Garrage
+        <AppLabelAndLogo></AppLabelAndLogo>
       </Typography>
       <Divider />
       <List>
         {navItems.map((item) => (
           <ListItem key={item.label} disablePadding>
-            <ListItemButton
-              sx={{ textAlign: "center" }}
-              onClick={(e) => handleNavItemClick(item)}
-            >
+            <ListItemButton sx={{ textAlign: "center" }}>
               <ListItemText
                 primary={
                   <Link to={item.path} style={{ textDecoration: "none" }}>
@@ -109,7 +108,7 @@ export function DashboardSkeleton({ component: Component }) {
               component="div"
               sx={{ flexGrow: 0, display: { xs: "none", sm: "block" } }}
             >
-              E Garrage
+              <AppLabelAndLogo></AppLabelAndLogo>
             </Typography>
           </Box>
           <Box sx={{ display: { xs: "none", sm: "block" } }}>
