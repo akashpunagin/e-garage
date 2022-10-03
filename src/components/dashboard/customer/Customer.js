@@ -4,6 +4,8 @@ import { Button, Box, Typography, Modal, Grid, TextField } from "@mui/material";
 
 import { DashboardSkeleton } from "../DashboardSkeleton";
 
+import CustomerModel from "../../../models/Customer";
+
 const style = {
   position: "absolute",
   top: "50%",
@@ -36,6 +38,20 @@ function Component() {
       const aadhar = aadharRef.current.value;
 
       console.log("Add customer", { name, address, contact, aadhar });
+
+      const apiResponse = await CustomerModel.insert(
+        name,
+        address,
+        contact,
+        aadhar
+      );
+
+      if (apiResponse.isError) {
+        alert(`Error while inserting customer: ${apiResponse.errorMessage}`);
+      } else {
+        alert(`Customer inserted successfully`);
+        handleAddCustomerFormClose();
+      }
     }
 
     return (
