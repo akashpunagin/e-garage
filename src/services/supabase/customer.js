@@ -27,7 +27,7 @@ async function insertCustomer(name, address, contact, aadhar) {
   return ApiResponse.success(customer);
 }
 
-async function getCustomer() {
+async function getCustomers() {
   let { data: customers, error } = await supabase.from(CUSTOMER).select("*");
   console.log("GET CUSTOMER: ", { error, customers });
 
@@ -51,7 +51,7 @@ async function getCustomer() {
 }
 
 async function deleteCustomerWithId(customerId) {
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from(CUSTOMER)
     .delete()
     .eq("customer_id", customerId);
@@ -63,7 +63,7 @@ async function deleteCustomerWithId(customerId) {
 }
 
 async function updateCustomerById(customerId, name, address, contact, aadhar) {
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from(CUSTOMER)
     .update({
       name,
@@ -81,7 +81,7 @@ async function updateCustomerById(customerId, name, address, contact, aadhar) {
 
 export {
   insertCustomer,
-  getCustomer,
+  getCustomers,
   deleteCustomerWithId,
   updateCustomerById,
 };

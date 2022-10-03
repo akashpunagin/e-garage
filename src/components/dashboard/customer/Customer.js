@@ -21,11 +21,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { DashboardSkeleton } from "../DashboardSkeleton";
 
 import CustomerModel from "../../../models/Customer";
-import {
-  getCustomer,
-  deleteCustomerWithId,
-  updateCustomerById,
-} from "../../../services/supabase/customer";
+import { getCustomers } from "../../../services/supabase/customer";
 
 const style = {
   position: "absolute",
@@ -52,7 +48,7 @@ function Component() {
   const [loading, setLoading] = useState(true);
 
   const fetchCustomers = async () => {
-    const apiResponse = await getCustomer();
+    const apiResponse = await getCustomers();
     if (apiResponse.error) {
       alert(
         `There was some error while fetching customers: ${apiResponse.errorMessage}`

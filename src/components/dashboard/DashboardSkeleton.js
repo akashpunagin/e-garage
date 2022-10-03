@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { useHistory, Link } from "react-router-dom";
-import { useAuth } from "../../contexts/Auth";
+import React from "react";
+import { Link } from "react-router-dom";
+// import { useAuth } from "../../contexts/Auth";
 
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
@@ -16,7 +16,6 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 
-import { Dashboard } from "./Dashboard";
 import { Customer } from "./customer/Customer";
 import { History } from "./history/History";
 import { Stock } from "./stock/Stock";
@@ -32,14 +31,12 @@ class NavItem {
 }
 
 export function DashboardSkeleton({ component: Component }) {
-  const { user, logout } = useAuth();
-
-  const history = useHistory();
-
-  async function handleLogout() {
-    await logout();
-    history.push("/login");
-  }
+  // const { user, logout } = useAuth();
+  // const history = useHistory();
+  // async function handleLogout() {
+  //   await logout();
+  //   history.push("/login");
+  // }
 
   const drawerWidth = 240;
 
