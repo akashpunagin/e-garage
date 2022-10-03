@@ -50,6 +50,33 @@ async function getCustomers() {
   return ApiResponse.success(ret);
 }
 
+async function getCustomerById(customerId) {
+  let { data: customers, error } = await supabase
+    .from(CUSTOMER)
+    .select("*")
+    .eq("customer_id", customerId);
+  console.log("GET CUSTOMER BY ID: ", { error, customers });
+
+  if (error) {
+    return ApiResponse.error(error.message);
+  }
+
+  if (customers.length === 0) {
+    return ApiResponse.error(`No customer with id: ${customerId}`);
+  }
+
+  const customer = customers[0];
+  const customerModel = new CustomerModel(
+    customer.customer_id,
+    customer.name,
+    customer.address,
+    customer.contact,
+    customer.aadhar_number
+  );
+
+  return ApiResponse.success(customerModel);
+}
+
 async function deleteCustomerWithId(customerId) {
   const { error } = await supabase
     .from(CUSTOMER)
@@ -84,4 +111,5 @@ export {
   getCustomers,
   deleteCustomerWithId,
   updateCustomerById,
+  getCustomerById,
 };
