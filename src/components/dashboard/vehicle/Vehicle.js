@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useTheme } from "@mui/material/styles";
 
 import {
   Button,
@@ -19,6 +20,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Chip,
+  OutlinedInput,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 
@@ -27,8 +30,9 @@ import { DashboardSkeleton } from "../DashboardSkeleton";
 import VehicleModel from "../../../models/Vehicle";
 import { getVehicles } from "../../../services/supabase/vehicle";
 import { getCustomers } from "../../../services/supabase/customer";
+import { getWorkers } from "../../../services/supabase/worker";
 
-const style = {
+const boxStyle = {
   position: "absolute",
   top: "50%",
   left: "50%",
@@ -39,6 +43,34 @@ const style = {
   boxShadow: 24,
   p: 4,
 };
+
+//Multi select style
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
+
+function getStyles(worker, selectedWorkers, theme) {
+  const workerId = worker.id;
+  const foundWorker = selectedWorkers.find((worker) => worker.id === workerId);
+
+  let currentTheme;
+  if (foundWorker) {
+    currentTheme = theme.typography.fontWeightMedium;
+  } else {
+    currentTheme = theme.typography.fontWeightRegular;
+  }
+
+  return {
+    fontWeight: currentTheme,
+  };
+}
 
 function Component() {
   const [addVehicleFormOpen, setAddVehicleFormOpen] = useState(false);
@@ -51,6 +83,7 @@ function Component() {
 
   const [vehicles, setVehicles] = useState(null);
   const [customers, setCustomers] = useState(null);
+  const [workers, setWorkers] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const fetchVehicles = async () => {
@@ -77,6 +110,18 @@ function Component() {
     }
   };
 
+  const fetchWorkers = async () => {
+    const apiResponse = await getWorkers();
+    if (apiResponse.error) {
+      alert(
+        `There was some error while fetching workers: ${apiResponse.errorMessage}`
+      );
+      return [];
+    } else {
+      return apiResponse.data;
+    }
+  };
+
   const setVehiclesData = async () => {
     setLoading(true);
     const vehiclesRes = await fetchVehicles();
@@ -91,9 +136,17 @@ function Component() {
     setLoading(false);
   };
 
+  const setWorkersData = async () => {
+    setLoading(true);
+    const workersRes = await fetchWorkers();
+    setWorkers((prev) => workersRes);
+    setLoading(false);
+  };
+
   useEffect(() => {
     setVehiclesData();
     setCustomersData();
+    setWorkersData();
   }, []);
 
   const handleDeleteVehicle = async (vehicle) => {
@@ -108,14 +161,21 @@ function Component() {
     }
   };
 
-  const AddVehicleModal = ({ customers }) => {
+  const AddVehicleModal = ({ customers, workers }) => {
+    const theme = useTheme();
+    const [selectedWorkers, setSelectedWorkers] = useState([]);
+
     const regNoRef = useRef();
     const modelRef = useRef();
     const [selectedCustomerIndex, setSelectedCustomerIndex] = useState(0);
 
     const handleCustomerChange = (event) => {
-      console.log("DROPDOWN :", event.target.value);
       setSelectedCustomerIndex((prev) => event.target.value);
+    };
+
+    const handleWorkerChange = (event) => {
+      const currentWorkerAsArray = event.target.value;
+      setSelectedWorkers((prev) => currentWorkerAsArray);
     };
 
     async function handleAddVehicleSubmit(e) {
@@ -148,7 +208,7 @@ function Component() {
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
       >
-        <Box sx={style}>
+        <Box sx={boxStyle}>
           <Typography id="modal-modal-title" variant="h5" component="h5">
             Add Vehicle
           </Typography>
@@ -201,6 +261,38 @@ function Component() {
                   })}
                 </Select>
               </FormControl>
+              //TODO add multi select
+              <FormControl sx={{ m: 1, width: 300 }}>
+                <InputLabel id="demo-multiple-chip-label">Workers</InputLabel>
+                <Select
+                  labelId="demo-multiple-chip-label"
+                  id="demo-multiple-chip"
+                  multiple
+                  value={selectedWorkers}
+                  onChange={handleWorkerChange}
+                  input={
+                    <OutlinedInput id="select-multiple-chip" label="Chip" />
+                  }
+                  renderValue={(selected) => (
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                      {selected.map((worker) => (
+                        <Chip key={worker} label={worker.name} />
+                      ))}
+                    </Box>
+                  )}
+                  MenuProps={MenuProps}
+                >
+                  {workers.map((worker) => (
+                    <MenuItem
+                      key={worker.id}
+                      value={worker}
+                      style={getStyles(worker, selectedWorkers, theme)}
+                    >
+                      {worker.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
               <Button type="submit" fullWidth variant="contained">
                 Add
               </Button>
@@ -226,7 +318,6 @@ function Component() {
       useState(initialCustomerIndex);
 
     const handleCustomerChange = (event) => {
-      console.log("DROPDOWN :", event.target.value);
       setSelectedCustomerIndex((prev) => event.target.value);
     };
 
@@ -260,7 +351,7 @@ function Component() {
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
       >
-        <Box sx={style}>
+        <Box sx={boxStyle}>
           <Typography id="modal-modal-title" variant="h5" component="h5">
             Update Vehicle
           </Typography>
@@ -401,7 +492,10 @@ function Component() {
         <Grid item>
           <Button onClick={handleAddVehicleFormOpen}>Add Vehicle</Button>
           {!loading ? (
-            <AddVehicleModal customers={customers}></AddVehicleModal>
+            <AddVehicleModal
+              customers={customers}
+              workers={workers}
+            ></AddVehicleModal>
           ) : (
             <p>Loading</p>
           )}
