@@ -18,7 +18,7 @@ import Button from "@mui/material/Button";
 
 import { Customer } from "./customer/Customer";
 import { History } from "./history/History";
-import { Stock } from "./stock/Stock";
+import { Item } from "./item/Item";
 import { Vehicle } from "./vehicle/Vehicle";
 import { Worker } from "./worker/Worker";
 
@@ -42,8 +42,8 @@ export function DashboardSkeleton({ component: Component }) {
 
   const navItems = [
     new NavItem("Customers", Customer, "/customer"),
-    new NavItem("Stock", Stock, "/stock"),
-    new NavItem("Vehicle", Vehicle, "/vehicle"),
+    new NavItem("Items", Item, "/item"),
+    new NavItem("Vehicles", Vehicle, "/vehicle"),
     new NavItem("Workers", Worker, "worker"),
     new NavItem("History", History, "/history"),
   ];

@@ -5,7 +5,8 @@ import { Login } from "./auth/Login";
 import { Dashboard } from "./dashboard/Dashboard";
 import { Customer } from "./dashboard/customer/Customer";
 import { History } from "./dashboard/history/History";
-import { Stock } from "./dashboard/stock/Stock";
+import { Item } from "./dashboard/item/Item";
+
 import { Vehicle } from "./dashboard/vehicle/Vehicle";
 import { Worker } from "./dashboard/worker/Worker";
 
@@ -30,7 +31,7 @@ function App() {
               path="/history"
               component={History}
             ></PrivateRoute>
-            <PrivateRoute exact path="/stock" component={Stock}></PrivateRoute>
+            <PrivateRoute exact path="/item" component={Item}></PrivateRoute>
             <PrivateRoute
               exact
               path="/vehicle"
