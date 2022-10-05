@@ -3,6 +3,7 @@ import { useTheme } from "@mui/material/styles";
 
 import {
   Button,
+  ButtonGroup,
   Box,
   Typography,
   Modal,
@@ -28,7 +29,6 @@ import {
   FormLabel,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-import CommentIcon from "@mui/icons-material/Comment";
 
 import { DashboardSkeleton } from "../DashboardSkeleton";
 
@@ -36,6 +36,7 @@ import VehicleModel from "../../../models/Vehicle";
 import { getVehicles } from "../../../services/supabase/vehicle";
 import { getCustomers } from "../../../services/supabase/customer";
 import { getWorkers } from "../../../services/supabase/worker";
+import { getItems } from "../../../services/supabase/item";
 
 const boxStyle = {
   position: "absolute",
@@ -61,12 +62,28 @@ const MenuProps = {
   },
 };
 
-function getStyles(worker, selectedWorkers, theme) {
+function getWorkerStyles(worker, selectedWorkers, theme) {
   const workerId = worker.id;
   const foundWorker = selectedWorkers.find((worker) => worker.id === workerId);
 
   let currentTheme;
   if (foundWorker) {
+    currentTheme = theme.typography.fontWeightMedium;
+  } else {
+    currentTheme = theme.typography.fontWeightRegular;
+  }
+
+  return {
+    fontWeight: currentTheme,
+  };
+}
+
+function getItemStyles(item, selectedItem, theme) {
+  const itemId = item.id;
+  const foundItem = selectedItem.find((item) => item.id === itemId);
+
+  let currentTheme;
+  if (foundItem) {
     currentTheme = theme.typography.fontWeightMedium;
   } else {
     currentTheme = theme.typography.fontWeightRegular;
@@ -89,6 +106,7 @@ function Component() {
   const [vehicles, setVehicles] = useState(null);
   const [customers, setCustomers] = useState(null);
   const [workers, setWorkers] = useState(null);
+  const [items, setItems] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const fetchVehicles = async () => {
@@ -127,6 +145,18 @@ function Component() {
     }
   };
 
+  const fetchItems = async () => {
+    const apiResponse = await getItems();
+    if (apiResponse.error) {
+      alert(
+        `There was some error while fetching items: ${apiResponse.errorMessage}`
+      );
+      return [];
+    } else {
+      return apiResponse.data;
+    }
+  };
+
   const setVehiclesData = async () => {
     setLoading(true);
     const vehiclesRes = await fetchVehicles();
@@ -141,6 +171,13 @@ function Component() {
     setLoading(false);
   };
 
+  const setItemsData = async () => {
+    setLoading(true);
+    const itemsRes = await fetchItems();
+    setItems((prev) => itemsRes);
+    setLoading(false);
+  };
+
   const setWorkersData = async () => {
     setLoading(true);
     const workersRes = await fetchWorkers();
@@ -152,6 +189,7 @@ function Component() {
     setVehiclesData();
     setCustomersData();
     setWorkersData();
+    setItemsData();
   }, []);
 
   const handleDeleteVehicle = async (vehicle) => {
@@ -166,9 +204,10 @@ function Component() {
     }
   };
 
-  const AddVehicleModal = ({ customers, workers }) => {
+  const AddVehicleModal = ({ customers, workers, items }) => {
     const theme = useTheme();
     const [selectedWorkers, setSelectedWorkers] = useState([]);
+    const [selectedItems, setSelectedItems] = useState([]);
 
     const regNoRef = useRef();
     const modelRef = useRef();
@@ -183,19 +222,30 @@ function Component() {
       setSelectedWorkers((prev) => currentWorkerAsArray);
     };
 
+    const handleItemChange = (event) => {
+      const currentItemAsArray = event.target.value;
+      setSelectedItems((prev) => currentItemAsArray);
+    };
+
     async function handleAddVehicleSubmit(e) {
       e.preventDefault();
 
       const regNo = regNoRef.current.value;
       const model = modelRef.current.value;
 
-      console.log("Add vehicle", { regNo, model, selectedWorkers });
+      console.log("Add vehicle", {
+        regNo,
+        model,
+        selectedWorkers,
+        selectedItems,
+      });
 
       const apiResponse = await VehicleModel.insert(
         regNo,
         model,
         customers[selectedCustomerIndex],
-        selectedWorkers
+        selectedWorkers,
+        selectedItems
       );
 
       if (apiResponse.isError) {
@@ -291,9 +341,41 @@ function Component() {
                     <MenuItem
                       key={worker.id}
                       value={worker}
-                      style={getStyles(worker, selectedWorkers, theme)}
+                      style={getWorkerStyles(worker, selectedWorkers, theme)}
                     >
                       {worker.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              //TODO items
+              <FormControl sx={{ m: 1, width: 300 }}>
+                <InputLabel id="demo-multiple-chip-label">Items</InputLabel>
+                <Select
+                  labelId="demo-multiple-chip-label"
+                  id="demo-multiple-chip"
+                  multiple
+                  value={selectedItems}
+                  onChange={handleItemChange}
+                  input={
+                    <OutlinedInput id="select-multiple-chip" label="Chip" />
+                  }
+                  renderValue={(selected) => (
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                      {selected.map((item) => (
+                        <Chip key={item} label={item.name} />
+                      ))}
+                    </Box>
+                  )}
+                  MenuProps={MenuProps}
+                >
+                  {items.map((item) => (
+                    <MenuItem
+                      key={item.id}
+                      value={item}
+                      style={getItemStyles(item, selectedItems, theme)}
+                    >
+                      {item.name}
                     </MenuItem>
                   ))}
                 </Select>
@@ -308,9 +390,10 @@ function Component() {
     );
   };
 
-  const UpdateVehicleModal = ({ vehicle, customers }) => {
+  const UpdateVehicleModal = ({ vehicle, customers, items }) => {
     const regNoRef = useRef();
     const modelRef = useRef();
+    const itemQtyRefs = Array(vehicle.itemIdQtyMaps.length).fill(useRef());
 
     const initialCustomer = customers.filter((customer) => {
       return customer.id === vehicle.customer.id;
@@ -325,8 +408,6 @@ function Component() {
     const initialCheckedWorkers = vehicle.workers.filter((worker) =>
       vehicle.completedWorkersIds.includes(worker.id)
     );
-
-    console.log("CHECK THERE: ", vehicle);
 
     const [checkedWorkers, setCheckedWorkers] = useState(initialCheckedWorkers);
 
@@ -347,6 +428,15 @@ function Component() {
       setSelectedCustomerIndex((prev) => event.target.value);
     };
 
+    //TODO delete
+    // const handleItemQtyIncrement = (itemIdQtyMap) => {
+    //   itemIdQtyMap.qty += 1;
+    // };
+
+    // const handleItemQtyDecrement = (itemIdQtyMap) => {
+    //   itemIdQtyMap.qty -= 1;
+    // };
+
     async function handleUpdateVehicleSubmit(e) {
       e.preventDefault();
 
@@ -354,22 +444,23 @@ function Component() {
       const model = modelRef.current.value;
 
       console.log("Update vehicle", { regNo, model, checkedWorkers });
+      //TODO change item qty map according to input refs then update
 
-      const apiResponse = await vehicle.update(
-        regNo,
-        model,
-        customers[selectedCustomerIndex],
-        vehicle.workers,
-        checkedWorkers
-      );
+      // const apiResponse = await vehicle.update(
+      //   regNo,
+      //   model,
+      //   customers[selectedCustomerIndex],
+      //   vehicle.workers,
+      //   checkedWorkers
+      // );
 
-      if (apiResponse.isError) {
-        alert(`Error while updating vehicle: ${apiResponse.errorMessage}`);
-      } else {
-        alert(`Vehicle updated successfully`);
-        handleupdateVehicleFormClose();
-        setVehiclesData();
-      }
+      // if (apiResponse.isError) {
+      //   alert(`Error while updating vehicle: ${apiResponse.errorMessage}`);
+      // } else {
+      //   alert(`Vehicle updated successfully`);
+      //   handleupdateVehicleFormClose();
+      //   setVehiclesData();
+      // }
     }
 
     return (
@@ -434,7 +525,7 @@ function Component() {
                   })}
                 </Select>
               </FormControl>
-              <FormLabel id="demo-radio-buttons-group-label">Workers</FormLabel>
+              <FormLabel>Workers</FormLabel>
               <List
                 sx={{
                   width: "100%",
@@ -463,6 +554,50 @@ function Component() {
                         </ListItemIcon>
                         <ListItemText id={labelId} primary={worker.name} />
                       </ListItemButton>
+                    </ListItem>
+                  );
+                })}
+              </List>
+              //TODO items
+              <FormLabel>Items</FormLabel>
+              <List
+                sx={{
+                  width: "100%",
+                  maxWidth: 360,
+                  bgcolor: "background.paper",
+                }}
+              >
+                {vehicle.itemIdQtyMaps.map((itemIdQtyMap, index) => {
+                  const labelId = `checkbox-list-label-${itemIdQtyMap.id}`;
+
+                  return (
+                    <ListItem disablePadding key={itemIdQtyMap.id}>
+                      <ButtonGroup //TODO change this to grid
+                        size="small"
+                        aria-label="small outlined button group"
+                      >
+                        <Typography varient="p">
+                          ItemId : {itemIdQtyMap.itemId}
+                        </Typography>
+                        <TextField
+                          id="qty"
+                          label="Qty"
+                          variant="outlined"
+                          margin="normal"
+                          required
+                          fullWidth
+                          type="number"
+                          name="qty"
+                          autoFocus
+                          onChange={(event) =>
+                            event.target.value < 0
+                              ? (event.target.value = 0)
+                              : event.target.value
+                          }
+                          inputRef={itemQtyRefs[index]}
+                          defaultValue={itemIdQtyMap.qty}
+                        />
+                      </ButtonGroup>
                     </ListItem>
                   );
                 })}
@@ -505,6 +640,7 @@ function Component() {
                     <UpdateVehicleModal
                       vehicle={vehicle}
                       customers={customers}
+                      items={items}
                     ></UpdateVehicleModal>
                     <IconButton
                       edge="end"
@@ -556,6 +692,7 @@ function Component() {
             <AddVehicleModal
               customers={customers}
               workers={workers}
+              items={items}
             ></AddVehicleModal>
           ) : (
             <p>Loading</p>

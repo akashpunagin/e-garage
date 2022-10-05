@@ -3,9 +3,11 @@ import ApiResponse from "../../models/ApiResponse";
 import VehicleModel from "../../models/Vehicle";
 import { getCustomerById } from "./customer";
 import { getWorkerByWorkerId } from "./worker";
+import { getItemByItemId } from "./item";
 
 const VEHICLE = "vehicle"; // table name
 const WORKER_VEHICLE = "worker_vehicle"; // table name
+const INSTALL = "install"; // table name
 
 async function insertWorkersToVehicle(regNo, workers) {
   for (const worker of workers) {
@@ -20,7 +22,26 @@ async function insertWorkersToVehicle(regNo, workers) {
   return ApiResponse.success();
 }
 
-async function insertVehicle(regNo, model, customer, selectedWorkers) {
+async function insertItemsToVehicle(regNo, items) {
+  for (const item of items) {
+    const { data, error } = await supabase
+      .from(INSTALL)
+      .insert([{ reg_no: regNo, item_id: item.id, qty: 0 }]);
+
+    if (error) {
+      return ApiResponse.error(error.message);
+    }
+  }
+  return ApiResponse.success();
+}
+
+async function insertVehicle(
+  regNo,
+  model,
+  customer,
+  selectedWorkers,
+  selectedItems
+) {
   const { data, error } = await supabase
     .from(VEHICLE)
     .insert([{ reg_no: regNo, model, customer_id: customer.id }]);
@@ -29,23 +50,95 @@ async function insertVehicle(regNo, model, customer, selectedWorkers) {
     return ApiResponse.error(error.message);
   }
 
-  const apiResponse = await insertWorkersToVehicle(regNo, selectedWorkers);
+  const workerApiResponse = await insertWorkersToVehicle(
+    regNo,
+    selectedWorkers
+  );
+  const itemApiResponse = await insertItemsToVehicle(regNo, selectedItems);
 
-  if (apiResponse.isError) {
-    return apiResponse;
+  if (workerApiResponse.isError) {
+    return workerApiResponse;
+  }
+
+  if (itemApiResponse.isError) {
+    return itemApiResponse;
   }
 
   const resVehicle = data[0];
 
   const completedWorkersIds = [];
+  const itemQtyMaps = [];
   const vehicle = new VehicleModel(
     resVehicle.reg_no,
     resVehicle.model,
     customer,
     selectedWorkers,
-    completedWorkersIds
+    completedWorkersIds,
+    itemQtyMaps
   );
   return ApiResponse.success(vehicle);
+}
+
+async function getWorkersAndCompletedWorkerIdsForVehicleRegNo(regNo) {
+  let { data: workers_vehicles, error } = await supabase
+    .from(WORKER_VEHICLE)
+    .select("*")
+    .eq("reg_no", regNo);
+
+  if (error) {
+    return ApiResponse.error(error.message);
+  }
+
+  const workers = [];
+  const completedWorkersIds = [];
+  for (const worker_vehicle of workers_vehicles) {
+    const {
+      worker_id: workerId,
+      reg_no: regNo,
+      iscompleted: isCompleted,
+    } = worker_vehicle;
+
+    if (isCompleted) {
+      completedWorkersIds.push(workerId);
+    }
+
+    const apiResponse = await getWorkerByWorkerId(workerId);
+    if (apiResponse.isError) {
+      return apiResponse;
+    }
+    const workerModel = apiResponse.data;
+    workers.push(workerModel);
+  }
+
+  return { workers, completedWorkersIds };
+}
+
+async function getItemIdQtyMapsForVehicleRegNo(regNo) {
+  let { data: installs, error } = await supabase
+    .from(INSTALL)
+    .select("*")
+    .eq("reg_no", regNo);
+
+  if (error) {
+    return ApiResponse.error(error.message);
+  }
+
+  const itemIdQtyMaps = [];
+  for (const install of installs) {
+    const { reg_no: regNo, item_id: itemId, qty } = install;
+
+    //TODO check if item model is required here
+    // const apiResponse = await getItemByItemId(itemId);
+    // if (apiResponse.isError) {
+    //   return apiResponse;
+    // }
+    // const itemModel = apiResponse.data;
+    // workers.push(itemModel);
+
+    itemIdQtyMaps.push({ itemId, qty });
+  }
+
+  return itemIdQtyMaps;
 }
 
 async function getVehicles() {
@@ -63,42 +156,19 @@ async function getVehicles() {
     } else {
       const customer = customerApiResponse.data;
 
-      let { data: workers_vehicles, error } = await supabase
-        .from(WORKER_VEHICLE)
-        .select("*")
-        .eq("reg_no", v.reg_no);
+      //TODO
+      const { workers, completedWorkersIds } =
+        await getWorkersAndCompletedWorkerIdsForVehicleRegNo(v.reg_no);
 
-      if (error) {
-        return ApiResponse.error(error.message);
-      }
-
-      const workers = [];
-      const completedWorkersIds = [];
-      for (const worker_vehicle of workers_vehicles) {
-        const {
-          worker_id: workerId,
-          reg_no: regNo,
-          iscompleted: isCompleted,
-        } = worker_vehicle;
-
-        if (isCompleted) {
-          completedWorkersIds.push(workerId);
-        }
-
-        const apiResponse = await getWorkerByWorkerId(workerId);
-        if (apiResponse.isError) {
-          return apiResponse;
-        }
-        const workerModel = apiResponse.data;
-        workers.push(workerModel);
-      }
+      const itemIdQtyMaps = await getItemIdQtyMapsForVehicleRegNo(v.reg_no);
 
       const vehicle = new VehicleModel(
         v.reg_no,
         v.model,
         customer,
         workers,
-        completedWorkersIds
+        completedWorkersIds,
+        itemIdQtyMaps
       );
 
       ret.push(vehicle);

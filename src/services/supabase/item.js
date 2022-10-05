@@ -4,6 +4,32 @@ import ItemModel from "../../models/Item";
 
 const ITEM = "item"; // table name
 
+async function getItemByItemId(itemId) {
+  let { data: items, error } = await supabase
+    .from(ITEM)
+    .select("*")
+    .eq("item_id", itemId);
+  console.log("GET ITEM BY ID: ", { error, items });
+
+  if (error) {
+    return ApiResponse.error(error.message);
+  }
+
+  if (items.length === 0) {
+    return ApiResponse.error(`No item with id: ${itemId}`);
+  }
+
+  const item = items[0];
+  const itemModel = new ItemModel(
+    item.item_id,
+    item.name,
+    item.price,
+    item.qty
+  );
+
+  return ApiResponse.success(itemModel);
+}
+
 async function insertItem(name, price, qty) {
   const { data, error } = await supabase
     .from(ITEM)
@@ -64,4 +90,10 @@ async function updateItemByItemId(itemId, name, price, qty) {
   return ApiResponse.success();
 }
 
-export { insertItem, getItems, deleteItemWithItemId, updateItemByItemId };
+export {
+  insertItem,
+  getItems,
+  deleteItemWithItemId,
+  updateItemByItemId,
+  getItemByItemId,
+};
