@@ -37,11 +37,13 @@ async function insertVehicle(regNo, model, customer, selectedWorkers) {
 
   const resVehicle = data[0];
 
+  const completedWorkersIds = [];
   const vehicle = new VehicleModel(
     resVehicle.reg_no,
     resVehicle.model,
     customer,
-    selectedWorkers
+    selectedWorkers,
+    completedWorkersIds
   );
   return ApiResponse.success(vehicle);
 }
@@ -61,7 +63,6 @@ async function getVehicles() {
     } else {
       const customer = customerApiResponse.data;
 
-      //TODO add workers
       let { data: workers_vehicles, error } = await supabase
         .from(WORKER_VEHICLE)
         .select("*")
@@ -72,8 +73,17 @@ async function getVehicles() {
       }
 
       const workers = [];
+      const completedWorkersIds = [];
       for (const worker_vehicle of workers_vehicles) {
-        const { worker_id: workerId, reg_no: regNo } = worker_vehicle;
+        const {
+          worker_id: workerId,
+          reg_no: regNo,
+          iscompleted: isCompleted,
+        } = worker_vehicle;
+
+        if (isCompleted) {
+          completedWorkersIds.push(workerId);
+        }
 
         const apiResponse = await getWorkerByWorkerId(workerId);
         if (apiResponse.isError) {
@@ -83,7 +93,13 @@ async function getVehicles() {
         workers.push(workerModel);
       }
 
-      const vehicle = new VehicleModel(v.reg_no, v.model, customer, workers);
+      const vehicle = new VehicleModel(
+        v.reg_no,
+        v.model,
+        customer,
+        workers,
+        completedWorkersIds
+      );
 
       ret.push(vehicle);
     }
@@ -104,8 +120,34 @@ async function deleteVehicleWithRegNo(vehicleRegNo) {
   return ApiResponse.success();
 }
 
-async function updateVehicleByRegNo(vehicleRegNo, model, customer) {
-  const { error } = await supabase
+async function updateWorkersIsCompleted(regNo, allWorkers, checkedWorkers) {
+  for (const worker of allWorkers) {
+    const isCurrentWorkerChecked = checkedWorkers.find(
+      (checkedWorker) => checkedWorker.id === worker.id
+    );
+
+    const { data, error } = await supabase
+      .from(WORKER_VEHICLE)
+      .update([{ iscompleted: isCurrentWorkerChecked ? true : false }])
+      .eq("reg_no", regNo)
+      .eq("worker_id", worker.id);
+
+    if (error) {
+      return ApiResponse.error(error.message);
+    }
+  }
+
+  return ApiResponse.success();
+}
+
+async function updateVehicleByRegNo(
+  vehicleRegNo,
+  model,
+  customer,
+  allWorkers,
+  checkedWorkers
+) {
+  const { data: vehicle, error } = await supabase
     .from(VEHICLE)
     .update({
       model,
@@ -115,6 +157,16 @@ async function updateVehicleByRegNo(vehicleRegNo, model, customer) {
 
   if (error) {
     return ApiResponse.error(error.message);
+  }
+
+  const apiResponse = await updateWorkersIsCompleted(
+    vehicleRegNo,
+    allWorkers,
+    checkedWorkers
+  );
+
+  if (apiResponse.isError) {
+    return apiResponse;
   }
   return ApiResponse.success();
 }

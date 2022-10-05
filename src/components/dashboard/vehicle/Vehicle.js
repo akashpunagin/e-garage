@@ -22,8 +22,12 @@ import {
   MenuItem,
   Chip,
   OutlinedInput,
+  ListItemButton,
+  ListItemIcon,
+  Checkbox,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import CommentIcon from "@mui/icons-material/Comment";
 
 import { DashboardSkeleton } from "../DashboardSkeleton";
 
@@ -262,7 +266,6 @@ function Component() {
                   })}
                 </Select>
               </FormControl>
-              //TODO add multi select
               <FormControl sx={{ m: 1, width: 300 }}>
                 <InputLabel id="demo-multiple-chip-label">Workers</InputLabel>
                 <Select
@@ -318,6 +321,27 @@ function Component() {
     const [selectedCustomerIndex, setSelectedCustomerIndex] =
       useState(initialCustomerIndex);
 
+    const initialCheckedWorkers = vehicle.workers.filter((worker) =>
+      vehicle.completedWorkersIds.includes(worker.id)
+    );
+
+    console.log("CHECK THERE: ", vehicle);
+
+    const [checkedWorkers, setCheckedWorkers] = useState(initialCheckedWorkers);
+
+    const handleWorkerCompletedToggle = (value) => () => {
+      const currentIndex = checkedWorkers.indexOf(value);
+      const newCheckedWorkers = [...checkedWorkers];
+
+      if (currentIndex === -1) {
+        newCheckedWorkers.push(value);
+      } else {
+        newCheckedWorkers.splice(currentIndex, 1);
+      }
+
+      setCheckedWorkers(newCheckedWorkers);
+    };
+
     const handleCustomerChange = (event) => {
       setSelectedCustomerIndex((prev) => event.target.value);
     };
@@ -328,12 +352,14 @@ function Component() {
       const regNo = regNoRef.current.value;
       const model = modelRef.current.value;
 
-      console.log("Update vehicle", { regNo, model });
+      console.log("Update vehicle", { regNo, model, checkedWorkers });
 
       const apiResponse = await vehicle.update(
         regNo,
         model,
-        customers[selectedCustomerIndex]
+        customers[selectedCustomerIndex],
+        vehicle.workers,
+        checkedWorkers
       );
 
       if (apiResponse.isError) {
@@ -407,6 +433,46 @@ function Component() {
                   })}
                 </Select>
               </FormControl>
+              <List
+                sx={{
+                  width: "100%",
+                  maxWidth: 360,
+                  bgcolor: "background.paper",
+                }}
+              >
+                {vehicle.workers.map((worker) => {
+                  const labelId = `checkbox-list-label-${worker.id}`;
+
+                  return (
+                    <ListItem
+                      disablePadding
+                      key={worker.id}
+                      secondaryAction={
+                        <IconButton edge="end" aria-label="comments">
+                          <CommentIcon />
+                        </IconButton>
+                      }
+                    >
+                      <ListItemButton
+                        role={undefined}
+                        onClick={handleWorkerCompletedToggle(worker)}
+                        dense
+                      >
+                        <ListItemIcon>
+                          <Checkbox
+                            edge="start"
+                            checked={checkedWorkers.indexOf(worker) !== -1}
+                            tabIndex={-1}
+                            disableRipple
+                            inputProps={{ "aria-labelledby": labelId }}
+                          />
+                        </ListItemIcon>
+                        <ListItemText id={labelId} primary={worker.name} />
+                      </ListItemButton>
+                    </ListItem>
+                  );
+                })}
+              </List>
               <Button type="submit" fullWidth variant="contained">
                 Update
               </Button>
