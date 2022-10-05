@@ -5,14 +5,15 @@ import {
 } from "../services/supabase/vehicle";
 
 class VehicleModel {
-  constructor(regNo, model, customer) {
+  constructor(regNo, model, customer, workers) {
     this.regNo = regNo;
     this.model = model;
     this.customer = customer;
+    this.workers = workers;
   }
 
-  static async insert(regNo, model, customer) {
-    return await insertVehicle(regNo, model, customer);
+  static async insert(regNo, model, customer, selectedWorkers) {
+    return await insertVehicle(regNo, model, customer, selectedWorkers);
   }
 
   async update(regNo, model, customer) {

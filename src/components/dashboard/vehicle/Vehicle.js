@@ -184,12 +184,13 @@ function Component() {
       const regNo = regNoRef.current.value;
       const model = modelRef.current.value;
 
-      console.log("Add vehicle", { regNo, model });
+      console.log("Add vehicle", { regNo, model, selectedWorkers });
 
       const apiResponse = await VehicleModel.insert(
         regNo,
         model,
-        customers[selectedCustomerIndex]
+        customers[selectedCustomerIndex],
+        selectedWorkers
       );
 
       if (apiResponse.isError) {

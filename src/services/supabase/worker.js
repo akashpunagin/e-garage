@@ -4,6 +4,32 @@ import WorkerModel from "../../models/Worker";
 
 const WORKER = "worker"; // table name
 
+async function getWorkerByWorkerId(workerId) {
+  let { data: workers, error } = await supabase
+    .from(WORKER)
+    .select("*")
+    .eq("worker_id", workerId);
+  console.log("GET WORKER BY ID: ", { error, workers });
+
+  if (error) {
+    return ApiResponse.error(error.message);
+  }
+
+  if (workers.length === 0) {
+    return ApiResponse.error(`No customer with id: ${workerId}`);
+  }
+
+  const worker = workers[0];
+  const workerModel = new WorkerModel(
+    worker.worker_id,
+    worker.name,
+    worker.worker_age,
+    worker.ismale
+  );
+
+  return ApiResponse.success(workerModel);
+}
+
 async function insertWorker(name, age, ismale) {
   const { data, error } = await supabase
     .from(WORKER)
@@ -71,4 +97,10 @@ async function updateWorkerById(workerId, name, age, isMale) {
   return ApiResponse.success();
 }
 
-export { insertWorker, getWorkers, deleteWorkerWithId, updateWorkerById };
+export {
+  insertWorker,
+  getWorkers,
+  deleteWorkerWithId,
+  updateWorkerById,
+  getWorkerByWorkerId,
+};
