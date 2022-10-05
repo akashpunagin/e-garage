@@ -25,6 +25,7 @@ import {
   ListItemButton,
   ListItemIcon,
   Checkbox,
+  FormLabel,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CommentIcon from "@mui/icons-material/Comment";
@@ -433,6 +434,7 @@ function Component() {
                   })}
                 </Select>
               </FormControl>
+              <FormLabel id="demo-radio-buttons-group-label">Workers</FormLabel>
               <List
                 sx={{
                   width: "100%",
@@ -444,15 +446,7 @@ function Component() {
                   const labelId = `checkbox-list-label-${worker.id}`;
 
                   return (
-                    <ListItem
-                      disablePadding
-                      key={worker.id}
-                      secondaryAction={
-                        <IconButton edge="end" aria-label="comments">
-                          <CommentIcon />
-                        </IconButton>
-                      }
-                    >
+                    <ListItem disablePadding key={worker.id}>
                       <ListItemButton
                         role={undefined}
                         onClick={handleWorkerCompletedToggle(worker)}
