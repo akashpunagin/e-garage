@@ -389,7 +389,7 @@ function Component() {
     );
   };
 
-  const UpdateVehicleModal = ({ vehicle, customers, items }) => {
+  const UpdateVehicleModal = ({ vehicle, customers, items, getItemWithId }) => {
     const regNoRef = useRef();
     const modelRef = useRef();
 
@@ -564,12 +564,11 @@ function Component() {
               >
                 {vehicle.itemIdQtyMaps.map((itemIdQtyMap, index) => {
                   const labelId = `label-${index}`;
-                  console.log("INDEX HERE:", labelId);
 
                   return (
                     <ListItem disablePadding key={`item-qty-map-${index}`}>
                       <Typography varient="p">
-                        ItemId : {itemIdQtyMap.itemId}
+                        {getItemWithId(items, itemIdQtyMap.itemId).name}
                       </Typography>
                       <TextField
                         key={Math.random()}
@@ -615,7 +614,14 @@ function Component() {
     );
   };
 
+  const getItemWithId = (items, itemId) => {
+    return items.find((item) => item.id === itemId);
+  };
+
   const VehicleList = ({ vehicles }) => {
+    const isVehicleWorkCompleted = (vehicle) =>
+      vehicle.completedWorkersIds.length === vehicle.workers.length;
+
     return (
       <List>
         {vehicles.map((vehicle, i) => (
@@ -633,6 +639,16 @@ function Component() {
                 disablePadding
                 secondaryAction={
                   <React.Fragment>
+                    {isVehicleWorkCompleted(vehicle) && (
+                      <Button
+                        onClick={() => {
+                          vehicle.paymentReceived();
+                        }}
+                      >
+                        Payment Received ({" "}
+                        {vehicle.getBillOfItems(items, getItemWithId)} )
+                      </Button>
+                    )}
                     <Button
                       edge="end"
                       aria-label="comments"
@@ -644,6 +660,7 @@ function Component() {
                       vehicle={vehicle}
                       customers={customers}
                       items={items}
+                      getItemWithId={getItemWithId}
                     ></UpdateVehicleModal>
                     <IconButton
                       edge="end"

@@ -52,6 +52,25 @@ class VehicleModel {
   async delete() {
     return await deleteVehicleWithRegNo(this.regNo);
   }
+
+  async paymentReceived() {
+    //TODO implement this method
+    //TODO delete row from install table
+    //TODO insert data into log table
+  }
+
+  getBillOfItems(items, getItemWithId) {
+    let totalAmount = 0;
+
+    for (const itemIdQtyMap of this.itemIdQtyMaps) {
+      const { itemId, qty } = itemIdQtyMap;
+      console.log("BILL:", { itemId, qty });
+      const item = getItemWithId(items, itemId);
+      totalAmount += item.price * qty;
+    }
+
+    return totalAmount;
+  }
 }
 
 export default VehicleModel;
