@@ -2,6 +2,7 @@ import {
   insertVehicle,
   updateVehicleByRegNo,
   deleteVehicleWithRegNo,
+  acceptPayment,
 } from "../services/supabase/vehicle";
 
 class VehicleModel {
@@ -53,10 +54,9 @@ class VehicleModel {
     return await deleteVehicleWithRegNo(this.regNo);
   }
 
-  async paymentReceived() {
-    //TODO implement this method
-    //TODO delete row from install table
-    //TODO insert data into log table
+  async paymentReceived(items, getItemWithId) {
+    const totalPrize = this.getBillOfItems(items, getItemWithId);
+    return await acceptPayment(this, totalPrize);
   }
 
   getBillOfItems(items, getItemWithId) {

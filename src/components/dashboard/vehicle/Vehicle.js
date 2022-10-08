@@ -618,6 +618,18 @@ function Component() {
     return items.find((item) => item.id === itemId);
   };
 
+  async function handlePaymentClick(vehicle, items, getItemWithId) {
+    const apiResponse = await vehicle.paymentReceived(items, getItemWithId);
+    if (apiResponse.isError) {
+      alert(
+        `There was some error while processing payment: ${apiResponse.errorMessage}`
+      );
+    } else {
+      alert(`Payment processed successfully`);
+      setVehiclesData();
+    }
+  }
+
   const VehicleList = ({ vehicles }) => {
     const isVehicleWorkCompleted = (vehicle) =>
       vehicle.completedWorkersIds.length === vehicle.workers.length;
@@ -641,9 +653,9 @@ function Component() {
                   <React.Fragment>
                     {isVehicleWorkCompleted(vehicle) && (
                       <Button
-                        onClick={() => {
-                          vehicle.paymentReceived();
-                        }}
+                        onClick={() =>
+                          handlePaymentClick(vehicle, items, getItemWithId)
+                        }
                       >
                         Payment Received ({" "}
                         {vehicle.getBillOfItems(items, getItemWithId)} )

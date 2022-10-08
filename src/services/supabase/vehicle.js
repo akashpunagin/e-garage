@@ -3,11 +3,12 @@ import ApiResponse from "../../models/ApiResponse";
 import VehicleModel from "../../models/Vehicle";
 import { getCustomerById } from "./customer";
 import { getWorkerByWorkerId } from "./worker";
-import { getItemByItemId } from "./item";
+import { getItemByItemId, updateItemByItemId } from "./item";
 
 const VEHICLE = "vehicle"; // table name
 const WORKER_VEHICLE = "worker_vehicle"; // table name
 const INSTALL = "install"; // table name
+const LOG = "ready_vehicle_log"; //tabel name
 
 async function insertWorkersToVehicle(regNo, workers) {
   for (const worker of workers) {
@@ -203,12 +204,21 @@ async function updateWorkersIsCompleted(regNo, allWorkers, checkedWorkers) {
 
 async function updateItemsToVehicle(regNo, updatedItemIdQtyMaps) {
   for (const updatedItemIdQtyMap of updatedItemIdQtyMaps) {
-    console.log("CHECK THIS:", regNo, updatedItemIdQtyMap);
+    const getItemApiResponse = await getItemByItemId(
+      updatedItemIdQtyMap.itemId
+    );
 
-    // const { data, error } = await supabase
-    //   .from("install")
-    //   .update({ qty: 2 })
-    //   .eq("some_column", "someValue");
+    if (getItemApiResponse.isError) {
+      return getItemApiResponse;
+    }
+
+    const item = getItemApiResponse.data;
+
+    if (item.qty < updatedItemIdQtyMap.qty) {
+      return ApiResponse.error(
+        `This item does not have enough quantity in stock, available: ${item.qty}, requested: ${updatedItemIdQtyMap.qty}`
+      );
+    }
 
     const { data, error } = await supabase
       .from(INSTALL)
@@ -220,6 +230,18 @@ async function updateItemsToVehicle(regNo, updatedItemIdQtyMaps) {
 
     if (error) {
       return ApiResponse.error(error.message);
+    }
+
+    const newItemQty = item.qty - updatedItemIdQtyMap.qty;
+    const updateItemApiResponse = await updateItemByItemId(
+      updatedItemIdQtyMap.itemId,
+      item.name,
+      item.price,
+      newItemQty
+    );
+
+    if (updateItemApiResponse.isError) {
+      return updateItemApiResponse;
     }
   }
   return ApiResponse.success();
@@ -267,9 +289,50 @@ async function updateVehicleByRegNo(
   return ApiResponse.success();
 }
 
+async function acceptPayment(vehicle, totalPrize) {
+  //delete from install
+  for (const itemIdQtyMap of vehicle.itemIdQtyMaps) {
+    const { itemId } = itemIdQtyMap;
+
+    const { data, error } = await supabase
+      .from(INSTALL)
+      .delete()
+      .eq("reg_no", vehicle.regNo)
+      .eq("item_id", itemId);
+
+    if (error) {
+      return ApiResponse.error(error.message);
+    }
+  }
+
+  //insert into log
+  const { data, error } = await supabase.from(LOG).insert([
+    {
+      reg_no: vehicle.regNo,
+      delivered_on: new Date(),
+      total_price: totalPrize,
+    },
+  ]);
+
+  console.log("INSERTED INTO LOG:", { data, error });
+
+  if (error) {
+    return ApiResponse.error(error.message);
+  }
+
+  const apiResponse = await deleteVehicleWithRegNo(vehicle.regNo);
+
+  if (apiResponse.isError) {
+    return apiResponse;
+  }
+
+  return ApiResponse.success();
+}
+
 export {
   insertVehicle,
   getVehicles,
   deleteVehicleWithRegNo,
   updateVehicleByRegNo,
+  acceptPayment,
 };
