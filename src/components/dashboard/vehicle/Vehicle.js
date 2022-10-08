@@ -348,7 +348,6 @@ function Component() {
                   ))}
                 </Select>
               </FormControl>
-              //TODO items
               <FormControl sx={{ m: 1, width: 300 }}>
                 <InputLabel id="demo-multiple-chip-label">Items</InputLabel>
                 <Select
@@ -393,7 +392,10 @@ function Component() {
   const UpdateVehicleModal = ({ vehicle, customers, items }) => {
     const regNoRef = useRef();
     const modelRef = useRef();
-    const itemQtyRefs = Array(vehicle.itemIdQtyMaps.length).fill(useRef());
+
+    const [updatedItemIdQtyMaps, setUpdatedItemIdQtyMaps] = useState(
+      vehicle.itemIdQtyMaps
+    );
 
     const initialCustomer = customers.filter((customer) => {
       return customer.id === vehicle.customer.id;
@@ -401,14 +403,12 @@ function Component() {
     const initialCustomerIndex = customers.findIndex(
       (customer) => customer.id === initialCustomer.id
     );
-
     const [selectedCustomerIndex, setSelectedCustomerIndex] =
       useState(initialCustomerIndex);
 
     const initialCheckedWorkers = vehicle.workers.filter((worker) =>
       vehicle.completedWorkersIds.includes(worker.id)
     );
-
     const [checkedWorkers, setCheckedWorkers] = useState(initialCheckedWorkers);
 
     const handleWorkerCompletedToggle = (value) => () => {
@@ -428,39 +428,35 @@ function Component() {
       setSelectedCustomerIndex((prev) => event.target.value);
     };
 
-    //TODO delete
-    // const handleItemQtyIncrement = (itemIdQtyMap) => {
-    //   itemIdQtyMap.qty += 1;
-    // };
-
-    // const handleItemQtyDecrement = (itemIdQtyMap) => {
-    //   itemIdQtyMap.qty -= 1;
-    // };
-
     async function handleUpdateVehicleSubmit(e) {
       e.preventDefault();
 
       const regNo = regNoRef.current.value;
       const model = modelRef.current.value;
 
-      console.log("Update vehicle", { regNo, model, checkedWorkers });
-      //TODO change item qty map according to input refs then update
+      console.log("Update vehicle", {
+        regNo,
+        model,
+        checkedWorkers,
+        updatedItemIdQtyMaps,
+      });
 
-      // const apiResponse = await vehicle.update(
-      //   regNo,
-      //   model,
-      //   customers[selectedCustomerIndex],
-      //   vehicle.workers,
-      //   checkedWorkers
-      // );
+      const apiResponse = await vehicle.update(
+        regNo,
+        model,
+        customers[selectedCustomerIndex],
+        vehicle.workers,
+        checkedWorkers,
+        updatedItemIdQtyMaps
+      );
 
-      // if (apiResponse.isError) {
-      //   alert(`Error while updating vehicle: ${apiResponse.errorMessage}`);
-      // } else {
-      //   alert(`Vehicle updated successfully`);
-      //   handleupdateVehicleFormClose();
-      //   setVehiclesData();
-      // }
+      if (apiResponse.isError) {
+        alert(`Error while updating vehicle: ${apiResponse.errorMessage}`);
+      } else {
+        alert(`Vehicle updated successfully`);
+        handleupdateVehicleFormClose();
+        setVehiclesData();
+      }
     }
 
     return (
@@ -558,7 +554,6 @@ function Component() {
                   );
                 })}
               </List>
-              //TODO items
               <FormLabel>Items</FormLabel>
               <List
                 sx={{
@@ -568,36 +563,44 @@ function Component() {
                 }}
               >
                 {vehicle.itemIdQtyMaps.map((itemIdQtyMap, index) => {
-                  const labelId = `checkbox-list-label-${itemIdQtyMap.id}`;
+                  const labelId = `label-${index}`;
+                  console.log("INDEX HERE:", labelId);
 
                   return (
-                    <ListItem disablePadding key={itemIdQtyMap.id}>
-                      <ButtonGroup //TODO change this to grid
-                        size="small"
-                        aria-label="small outlined button group"
-                      >
-                        <Typography varient="p">
-                          ItemId : {itemIdQtyMap.itemId}
-                        </Typography>
-                        <TextField
-                          id="qty"
-                          label="Qty"
-                          variant="outlined"
-                          margin="normal"
-                          required
-                          fullWidth
-                          type="number"
-                          name="qty"
-                          autoFocus
-                          onChange={(event) =>
-                            event.target.value < 0
-                              ? (event.target.value = 0)
-                              : event.target.value
+                    <ListItem disablePadding key={`item-qty-map-${index}`}>
+                      <Typography varient="p">
+                        ItemId : {itemIdQtyMap.itemId}
+                      </Typography>
+                      <TextField
+                        key={Math.random()}
+                        id={labelId}
+                        label={`Qty-${index}`}
+                        variant="outlined"
+                        margin="normal"
+                        required
+                        fullWidth
+                        type="number"
+                        name={`qty-${index}`}
+                        autoFocus
+                        onChange={(event) => {
+                          if (event.target.value < 0) {
+                            event.target.value = 0;
                           }
-                          inputRef={itemQtyRefs[index]}
-                          defaultValue={itemIdQtyMap.qty}
-                        />
-                      </ButtonGroup>
+
+                          setUpdatedItemIdQtyMaps((prev) => {
+                            const currentQty = event.target.value;
+                            const itemId = itemIdQtyMap.itemId;
+
+                            const index = prev.findIndex(
+                              (itemIdQtyMap) => itemIdQtyMap.itemId === itemId
+                            );
+
+                            prev[index].qty = parseInt(currentQty);
+                            return prev;
+                          });
+                        }}
+                        defaultValue={itemIdQtyMap.qty}
+                      />
                     </ListItem>
                   );
                 })}

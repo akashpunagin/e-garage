@@ -31,13 +31,21 @@ class VehicleModel {
     );
   }
 
-  async update(regNo, model, customer, allWorkers, checkedWorkers) {
+  async update(
+    regNo,
+    model,
+    customer,
+    allWorkers,
+    checkedWorkers,
+    updatedItemIdQtyMaps
+  ) {
     return await updateVehicleByRegNo(
       regNo,
       model,
       customer,
       allWorkers,
-      checkedWorkers
+      checkedWorkers,
+      updatedItemIdQtyMaps
     );
   }
 

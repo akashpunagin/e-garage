@@ -127,14 +127,6 @@ async function getItemIdQtyMapsForVehicleRegNo(regNo) {
   for (const install of installs) {
     const { reg_no: regNo, item_id: itemId, qty } = install;
 
-    //TODO check if item model is required here
-    // const apiResponse = await getItemByItemId(itemId);
-    // if (apiResponse.isError) {
-    //   return apiResponse;
-    // }
-    // const itemModel = apiResponse.data;
-    // workers.push(itemModel);
-
     itemIdQtyMaps.push({ itemId, qty });
   }
 
@@ -156,7 +148,6 @@ async function getVehicles() {
     } else {
       const customer = customerApiResponse.data;
 
-      //TODO
       const { workers, completedWorkersIds } =
         await getWorkersAndCompletedWorkerIdsForVehicleRegNo(v.reg_no);
 
@@ -210,12 +201,37 @@ async function updateWorkersIsCompleted(regNo, allWorkers, checkedWorkers) {
   return ApiResponse.success();
 }
 
+async function updateItemsToVehicle(regNo, updatedItemIdQtyMaps) {
+  for (const updatedItemIdQtyMap of updatedItemIdQtyMaps) {
+    console.log("CHECK THIS:", regNo, updatedItemIdQtyMap);
+
+    // const { data, error } = await supabase
+    //   .from("install")
+    //   .update({ qty: 2 })
+    //   .eq("some_column", "someValue");
+
+    const { data, error } = await supabase
+      .from(INSTALL)
+      .update({
+        qty: updatedItemIdQtyMap.qty,
+      })
+      .eq("reg_no", regNo)
+      .eq("item_id", updatedItemIdQtyMap.itemId);
+
+    if (error) {
+      return ApiResponse.error(error.message);
+    }
+  }
+  return ApiResponse.success();
+}
+
 async function updateVehicleByRegNo(
   vehicleRegNo,
   model,
   customer,
   allWorkers,
-  checkedWorkers
+  checkedWorkers,
+  updatedItemIdQtyMaps
 ) {
   const { data: vehicle, error } = await supabase
     .from(VEHICLE)
@@ -229,15 +245,25 @@ async function updateVehicleByRegNo(
     return ApiResponse.error(error.message);
   }
 
-  const apiResponse = await updateWorkersIsCompleted(
+  const updateWorkerApiResponse = await updateWorkersIsCompleted(
     vehicleRegNo,
     allWorkers,
     checkedWorkers
   );
 
-  if (apiResponse.isError) {
-    return apiResponse;
+  if (updateWorkerApiResponse.isError) {
+    return updateWorkerApiResponse;
   }
+
+  const updateItemApiResponse = await updateItemsToVehicle(
+    vehicleRegNo,
+    updatedItemIdQtyMaps
+  );
+
+  if (updateItemApiResponse.isError) {
+    return updateItemApiResponse;
+  }
+
   return ApiResponse.success();
 }
 

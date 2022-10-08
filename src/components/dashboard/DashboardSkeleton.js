@@ -57,7 +57,7 @@ export function DashboardSkeleton({ component: Component }) {
   const AppLabelAndLogo = () => {
     return (
       <Link to="/" style={{ textDecoration: "none", color: "black" }}>
-        E Garrage
+        E Garage
       </Link>
     );
   };
