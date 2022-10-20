@@ -95,19 +95,34 @@ function getItemStyles(item, selectedItem, theme) {
 }
 
 function Component() {
-  const [addVehicleFormOpen, setAddVehicleFormOpen] = useState(false);
-  const handleAddVehicleFormOpen = () => setAddVehicleFormOpen(true);
-  const handleAddVehicleFormClose = () => setAddVehicleFormOpen(false);
-
-  const [updateVehicleFormOpen, setUpdateVehicleFormOpen] = useState(false);
-  const handleUpdateVehicleFormOpen = () => setUpdateVehicleFormOpen(true);
-  const handleupdateVehicleFormClose = () => setUpdateVehicleFormOpen(false);
+  const [, updateState] = React.useState();
+  const forceUpdate = React.useCallback(() => updateState({}), []);
 
   const [vehicles, setVehicles] = useState(null);
   const [customers, setCustomers] = useState(null);
   const [workers, setWorkers] = useState(null);
   const [items, setItems] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const [addVehicleFormOpen, setAddVehicleFormOpen] = useState(false);
+  const handleAddVehicleFormOpen = () => setAddVehicleFormOpen(true);
+  const handleAddVehicleFormClose = () => setAddVehicleFormOpen(false);
+
+  const [updateVehicleFormsOpen, setUpdateVehicleFormOpen] = useState({});
+  const handleUpdateVehicleFormOpen = (regNo) => {
+    setUpdateVehicleFormOpen((prev) => {
+      console.log("PREV: ", prev);
+      prev[regNo] = true;
+      return prev;
+    });
+  };
+
+  const handleupdateVehicleFormClose = (regNo) => {
+    setUpdateVehicleFormOpen((prev) => {
+      prev[regNo] = false;
+      return prev;
+    });
+  };
 
   const fetchVehicles = async () => {
     const apiResponse = await getVehicles();
@@ -454,15 +469,21 @@ function Component() {
         alert(`Error while updating vehicle: ${apiResponse.errorMessage}`);
       } else {
         alert(`Vehicle updated successfully`);
-        handleupdateVehicleFormClose();
+        handleupdateVehicleFormClose(vehicle.regNo);
+        forceUpdate();
         setVehiclesData();
       }
     }
 
+    console.log("CHECK HERE", updateVehicleFormsOpen[vehicle.regNo]);
+
     return (
       <Modal
-        open={updateVehicleFormOpen}
-        onClose={handleupdateVehicleFormClose}
+        open={updateVehicleFormsOpen[vehicle.regNo]}
+        onClose={() => {
+          handleupdateVehicleFormClose(vehicle.regNo);
+          forceUpdate();
+        }}
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
       >
@@ -651,23 +672,29 @@ function Component() {
                 disablePadding
                 secondaryAction={
                   <React.Fragment>
-                    {isVehicleWorkCompleted(vehicle) && (
+                    {isVehicleWorkCompleted(vehicle) &&
+                      !vehicle.isDelivered && (
+                        <Button
+                          onClick={() =>
+                            handlePaymentClick(vehicle, items, getItemWithId)
+                          }
+                        >
+                          Payment Received ({" "}
+                          {vehicle.getBillOfItems(items, getItemWithId)} )
+                        </Button>
+                      )}
+                    {!vehicle.isDelivered && (
                       <Button
-                        onClick={() =>
-                          handlePaymentClick(vehicle, items, getItemWithId)
-                        }
+                        edge="end"
+                        aria-label="comments"
+                        onClick={() => {
+                          handleUpdateVehicleFormOpen(vehicle.regNo);
+                          forceUpdate();
+                        }}
                       >
-                        Payment Received ({" "}
-                        {vehicle.getBillOfItems(items, getItemWithId)} )
+                        Update
                       </Button>
                     )}
-                    <Button
-                      edge="end"
-                      aria-label="comments"
-                      onClick={handleUpdateVehicleFormOpen}
-                    >
-                      Update
-                    </Button>
                     <UpdateVehicleModal
                       vehicle={vehicle}
                       customers={customers}
@@ -694,6 +721,9 @@ function Component() {
                     <Box sx={{ display: "flex" }}>
                       <Typography>{vehicle.regNo},</Typography>
                       <Typography ml={1}>{vehicle.model}</Typography>
+                      <Typography ml={1}>
+                        {vehicle.isDelivered ? "Delivered" : "Not Delivered"}
+                      </Typography>
                     </Box>
                   }
                   secondary={vehicle.customer.name}
@@ -720,7 +750,7 @@ function Component() {
         </Grid>
         <Grid item>
           <Button onClick={handleAddVehicleFormOpen}>Add Vehicle</Button>
-          {!loading ? (
+          {workers !== null && customers !== null && items !== null ? (
             <AddVehicleModal
               customers={customers}
               workers={workers}

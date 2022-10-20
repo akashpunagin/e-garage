@@ -10,6 +10,7 @@ class VehicleModel {
     regNo,
     model,
     customer,
+    isDelivered,
     workers, //all workers working for vehicle
     completedWorkersIds, //ids of workers whose work is completed
     itemIdQtyMaps
@@ -17,6 +18,7 @@ class VehicleModel {
     this.regNo = regNo;
     this.model = model;
     this.customer = customer;
+    this.isDelivered = isDelivered;
     this.workers = workers;
     this.completedWorkersIds = completedWorkersIds;
     this.itemIdQtyMaps = itemIdQtyMaps;
