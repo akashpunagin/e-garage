@@ -69,10 +69,13 @@ async function insertVehicle(
 
   const completedWorkersIds = [];
   const itemQtyMaps = [];
+  const isDelivered = false;
+
   const vehicle = new VehicleModel(
     resVehicle.reg_no,
     resVehicle.model,
     customer,
+    isDelivered,
     selectedWorkers,
     completedWorkersIds,
     itemQtyMaps
@@ -135,7 +138,10 @@ async function getItemIdQtyMapsForVehicleRegNo(regNo) {
 }
 
 async function getVehicles() {
-  let { data: vehicles, error } = await supabase.from(VEHICLE).select("*");
+  let { data: vehicles, error } = await supabase
+    .from(VEHICLE)
+    .select("*")
+    .order("is_delivered", { ascending: true });
 
   if (error) {
     return ApiResponse.error(error.message);
@@ -158,6 +164,7 @@ async function getVehicles() {
         v.reg_no,
         v.model,
         customer,
+        v.is_delivered,
         workers,
         completedWorkersIds,
         itemIdQtyMaps
@@ -306,7 +313,7 @@ async function acceptPayment(vehicle, totalPrize) {
   }
 
   //insert into log
-  const { data, error } = await supabase.from(LOG).insert([
+  const { data, error: insertError } = await supabase.from(LOG).insert([
     {
       reg_no: vehicle.regNo,
       delivered_on: new Date(),
@@ -314,16 +321,22 @@ async function acceptPayment(vehicle, totalPrize) {
     },
   ]);
 
-  console.log("INSERTED INTO LOG:", { data, error });
+  console.log("INSERTED INTO LOG:", { data, insertError });
 
-  if (error) {
-    return ApiResponse.error(error.message);
+  if (insertError) {
+    return ApiResponse.error(insertError.message);
   }
 
-  const apiResponse = await deleteVehicleWithRegNo(vehicle.regNo);
+  // update vehicle delivered status
+  const { error: updateError } = await supabase
+    .from(VEHICLE)
+    .update({
+      is_delivered: true,
+    })
+    .eq("reg_no", vehicle.regNo);
 
-  if (apiResponse.isError) {
-    return apiResponse;
+  if (updateError) {
+    return ApiResponse.error(updateError.message);
   }
 
   return ApiResponse.success();
