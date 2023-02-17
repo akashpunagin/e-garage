@@ -80,8 +80,8 @@ function Component() {
                   </Typography>
                 </ListItemAvatar>
                 <ListItemText
-                  primary={`${log.regNo}, ${log.totalPrize}`}
-                  secondary={log.deliveredOn}
+                  primary={`Register No: ${log.regNo}, Prize: ${log.totalPrize}`}
+                  secondary={`Delivered On: ${log.deliveredOn}`}
                 />
               </ListItem>
             </CardContent>
