@@ -1,6 +1,6 @@
 import React from "react";
-import { Link } from "react-router-dom";
-// import { useAuth } from "../../contexts/Auth";
+import { Link, useHistory } from "react-router-dom";
+import { useAuth } from "../../contexts/Auth";
 
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
@@ -31,12 +31,12 @@ class NavItem {
 }
 
 export function DashboardSkeleton({ component: Component }) {
-  // const { user, logout } = useAuth();
-  // const history = useHistory();
-  // async function handleLogout() {
-  //   await logout();
-  //   history.push("/login");
-  // }
+  const { user, logout } = useAuth();
+  const history = useHistory();
+  async function handleLogout() {
+    await logout();
+    history.push("/login");
+  }
 
   const drawerWidth = 240;
 
@@ -119,6 +119,9 @@ export function DashboardSkeleton({ component: Component }) {
                 </Link>
               </Button>
             ))}
+            <Button sx={{ color: "#fff" }} onClick={handleLogout}>
+              Logout
+            </Button>
           </Box>
         </Toolbar>
       </AppBar>
