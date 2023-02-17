@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState, createContext } from "react";
-import { supabase } from "../supabase";
+import { supabase } from "../services/supabase/supabase";
 
 const AuthContext = createContext();
 
@@ -26,7 +26,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const value = {
-    signUp: (data) => supabase.auth.signUp(data),
+    signup: (data) => supabase.auth.signUp(data),
     login: (data) => supabase.auth.signIn(data),
     logout: () => supabase.auth.signOut(),
     user,
